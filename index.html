@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marketing Challenge Quiz</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --ink: #14213d;
+    --muted: #5b6577;
+    --line: #d5dbe5;
+    --accent: #1b4f72;
+    --accent-ink: #ffffff;
+    --good: #1e7a4c;
+    --good-bg: #e3f4ea;
+    --bad: #a63a2b;
+    --bad-bg: #fbe8e4;
+    --focus: #e0a100;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1623;
+      --surface: #182235;
+      --ink: #e8edf5;
+      --muted: #9aa6ba;
+      --line: #2c3a52;
+      --accent: #6fb1e0;
+      --accent-ink: #0f1623;
+      --good: #6fd09a;
+      --good-bg: #17382a;
+      --bad: #f0907f;
+      --bad-bg: #3d2020;
+      --focus: #f2c14e;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+  main { max-width: 680px; margin: 0 auto; }
+  h1 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: clamp(1.6rem, 4vw, 2.1rem);
+    line-height: 1.2;
+    margin: 0 0 6px;
+  }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+  }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+  .bar > span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s ease; }
+  .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: .9rem; margin-bottom: 18px; }
+  .q {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: clamp(1.15rem, 3vw, 1.4rem);
+    line-height: 1.4;
+    margin: 0 0 18px;
+  }
+  .opts { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .opt {
+    display: flex; gap: 12px; align-items: flex-start;
+    width: 100%; text-align: left;
+    background: var(--surface); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; font: inherit; cursor: pointer;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt:disabled { cursor: default; }
+  .opt .tag {
+    flex: none; width: 26px; height: 26px; border-radius: 50%;
+    border: 1.5px solid var(--line); display: grid; place-items: center;
+    font-size: .85rem; font-weight: 600; color: var(--muted);
+  }
+  .opt.correct { border-color: var(--good); background: var(--good-bg); }
+  .opt.correct .tag { background: var(--good); border-color: var(--good); color: var(--accent-ink); }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-bg); }
+  .opt.wrong .tag { background: var(--bad); border-color: var(--bad); color: var(--accent-ink); }
+  button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .feedback {
+    margin-top: 16px; padding: 12px 14px; border-radius: 8px;
+    border-left: 4px solid var(--line); background: var(--bg);
+  }
+  .feedback.good { border-left-color: var(--good); }
+  .feedback.bad { border-left-color: var(--bad); }
+  .feedback strong { display: block; margin-bottom: 2px; }
+  .hintrow { margin-top: 14px; font-size: .95rem; color: var(--muted); min-height: 1.5em; }
+  .link {
+    background: none; border: none; padding: 0; font: inherit; color: var(--accent);
+    text-decoration: underline; cursor: pointer;
+  }
+  .actions { display: flex; justify-content: flex-end; margin-top: 20px; gap: 10px; }
+  .btn {
+    background: var(--accent); color: var(--accent-ink);
+    border: none; border-radius: 8px; padding: 11px 22px;
+    font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .btn.alt { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .score { font-family: Georgia, serif; font-size: 3rem; line-height: 1; margin: 6px 0; }
+  .review { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+  .review li { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .review li.ok { border-left: 4px solid var(--good); }
+  .review li.no { border-left: 4px solid var(--bad); }
+  .review .rq { font-weight: 600; margin: 0 0 4px; }
+  .review p { margin: 2px 0; font-size: .95rem; }
+  .muted { color: var(--muted); }
+  .hidden { display: none; }
+  @media (prefers-reduced-motion: reduce) { .bar > span { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Marketing Challenge Quiz</h1>
+  <p class="sub">Pricing, promotion, distribution and services marketing. 10 questions.</p>
+
+  <section id="quiz" class="card" aria-live="polite"></section>
+  <section id="result" class="card hidden"></section>
+</main>
+
+<script>
+(function () {
+  var QUESTIONS = [
+    { q: "A company launches a new, innovative smartphone at a very high price and lowers it gradually over time. Which pricing strategy is this?",
+      o: ["Market penetration pricing", "Market skimming pricing", "Going-rate pricing", "Cost-plus pricing"], a: 1,
+      hint: "Think of skimming the cream off the top of the market first.",
+      e: "Market skimming sets a high initial price and reduces it over time. It suits unique or innovative products with inelastic demand." },
+    { q: "Which element of the marketing mix is the only one that generates revenue?",
+      o: ["Product", "Promotion", "Price", "Place"], a: 2,
+      e: "Price is the only element that brings in revenue. Product, promotion and place all create costs." },
+    { q: "Pricing a product at ₹99 instead of ₹100 is an example of which strategy?",
+      o: ["Psychological (odd) pricing", "Geographical pricing", "Break-even pricing", "Sealed-bid pricing"], a: 0,
+      e: "Odd pricing is a psychological pricing tactic, because customers perceive ₹99 as noticeably cheaper than ₹100." },
+    { q: "Which promotion tool involves paid, non-personal presentation of ideas, goods or services by an identified sponsor?",
+      o: ["Personal selling", "Public relations", "Sales promotion", "Advertising"], a: 3,
+      e: "Advertising is paid, non-personal and attributed to an identified sponsor, such as a TV, print or digital ad." },
+    { q: "A manufacturer directs its promotion at wholesalers and retailers to “push” the product through the channel. This is called:",
+      o: ["Pull strategy", "Push strategy", "Skimming strategy", "Differential strategy"], a: 1,
+      e: "A push strategy targets channel members with trade promotion and personal selling. A pull strategy targets final consumers to create demand." },
+    { q: "Which channel is a one-level channel for consumer goods?",
+      o: ["Manufacturer to Consumer", "Manufacturer to Retailer to Consumer", "Manufacturer to Wholesaler to Retailer to Consumer", "Manufacturer to Agent to Wholesaler to Retailer to Consumer"], a: 1,
+      e: "A one-level channel has exactly one intermediary (the retailer). Manufacturer to consumer is zero-level, and the others are two-level and three-level." },
+    { q: "Which distribution intensity is typically used for luxury cars and designer goods?",
+      o: ["Intensive distribution", "Selective distribution", "Exclusive distribution", "Mass distribution"], a: 2,
+      e: "Exclusive distribution gives one outlet in a territory, which supports prestige and control for luxury products." },
+    { q: "Which of the following is NOT a component of a physical distribution system?",
+      o: ["Warehousing", "Order processing", "Inventory management", "Perceived-value pricing"], a: 3,
+      e: "Perceived-value pricing is a pricing method. The components of physical distribution are order processing, transportation, warehousing, inventory, materials handling, packaging and customer service." },
+    { q: "An empty hotel room or an unsold airline seat cannot be stored for later sale. Which service characteristic does this show?",
+      o: ["Intangibility", "Inseparability", "Variability", "Perishability"], a: 3,
+      e: "Services cannot be stored or inventoried. Firms manage this with reservations and differential pricing." },
+    { q: "Which of these are the three extra Ps added in the services marketing mix?",
+      o: ["People, Process, Physical evidence", "Packaging, Price, Positioning", "Promotion, Profit, Performance", "Place, Planning, Production"], a: 0,
+      e: "The 7 Ps of services are Product, Price, Place and Promotion plus People, Process and Physical evidence." }
+  ];
+  var LETTERS = ["A", "B", "C", "D"];
+  var quiz = document.getElementById("quiz");
+  var result = document.getElementById("result");
+  var idx = 0, score = 0, answered = false, answers = [];
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function render() {
+    var item = QUESTIONS[idx];
+    answered = false;
+    quiz.innerHTML = "";
+
+    var bar = el("div", "bar"), fill = el("span");
+    fill.style.width = (idx / QUESTIONS.length * 100) + "%";
+    bar.appendChild(fill);
+    var meta = el("div", "meta");
+    meta.appendChild(el("span", "", "Question " + (idx + 1) + " of " + QUESTIONS.length));
+    meta.appendChild(el("span", "", "Score: " + score));
+    quiz.appendChild(bar);
+    quiz.appendChild(meta);
+
+    quiz.appendChild(el("p", "q", item.q));
+
+    var list = el("ul", "opts");
+    item.o.forEach(function (text, i) {
+      var li = el("li");
+      var b = el("button", "opt");
+      b.type = "button";
+      b.appendChild(el("span", "tag", LETTERS[i]));
+      b.appendChild(el("span", "", text));
+      b.addEventListener("click", function () { choose(i); });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+    quiz.appendChild(list);
+
+    var hintrow = el("div", "hintrow");
+    if (item.hint) {
+      var hb = el("button", "link", "Show hint");
+      hb.type = "button";
+      hb.addEventListener("click", function () {
+        hintrow.textContent = "Hint: " + item.hint;
+      });
+      hintrow.appendChild(hb);
+    }
+    quiz.appendChild(hintrow);
+
+    var fb = el("div", "feedback hidden");
+    fb.id = "fb";
+    quiz.appendChild(fb);
+
+    var actions = el("div", "actions");
+    var next = el("button", "btn", idx === QUESTIONS.length - 1 ? "See results" : "Next question");
+    next.type = "button";
+    next.id = "next";
+    next.disabled = true;
+    next.addEventListener("click", advance);
+    actions.appendChild(next);
+    quiz.appendChild(actions);
+  }
+
+  function choose(i) {
+    if (answered) return;
+    answered = true;
+    var item = QUESTIONS[idx];
+    var ok = i === item.a;
+    if (ok) score++;
+    answers.push(i);
+
+    var buttons = quiz.querySelectorAll(".opt");
+    buttons.forEach(function (b, k) {
+      b.disabled = true;
+      if (k === item.a) b.classList.add("correct");
+      else if (k === i) b.classList.add("wrong");
+    });
+
+    var fb = document.getElementById("fb");
+    fb.className = "feedback " + (ok ? "good" : "bad");
+    fb.innerHTML = "";
+    fb.appendChild(el("strong", "", ok ? "Correct." : "Not quite. The answer is " + LETTERS[item.a] + "."));
+    fb.appendChild(el("span", "", item.e));
+
+    var next = document.getElementById("next");
+    next.disabled = false;
+    next.focus();
+  }
+
+  function advance() {
+    if (!answered) return;
+    idx++;
+    if (idx < QUESTIONS.length) render();
+    else showResult();
+  }
+
+  function verdict(pct) {
+    if (pct >= 90) return "Excellent. You are exam ready.";
+    if (pct >= 70) return "Good. Revise the topics you missed.";
+    if (pct >= 50) return "Average. Re-read the notes on pricing strategies, the promotion mix and services.";
+    return "Needs revision. Go through the study notes again and retake the quiz.";
+  }
+
+  function showResult() {
+    quiz.classList.add("hidden");
+    result.classList.remove("hidden");
+    result.innerHTML = "";
+    var total = QUESTIONS.length;
+    result.appendChild(el("h1", "", "Your result"));
+    result.appendChild(el("div", "score", score + " / " + total));
+    result.appendChild(el("p", "", verdict(score / total * 100)));
+
+    var actions = el("div", "actions");
+    actions.style.justifyContent = "flex-start";
+    var again = el("button", "btn", "Retake quiz");
+    again.type = "button";
+    again.addEventListener("click", restart);
+    actions.appendChild(again);
+    result.appendChild(actions);
+
+    var ul = el("ul", "review");
+    QUESTIONS.forEach(function (item, k) {
+      var ok = answers[k] === item.a;
+      var li = el("li", ok ? "ok" : "no");
+      li.appendChild(el("p", "rq", (k + 1) + ". " + item.q));
+      li.appendChild(el("p", "", "Your answer: " + item.o[answers[k]] + (ok ? " (correct)" : "")));
+      if (!ok) li.appendChild(el("p", "", "Correct answer: " + item.o[item.a]));
+      li.appendChild(el("p", "muted", item.e));
+      ul.appendChild(li);
+    });
+    result.appendChild(ul);
+    window.scrollTo(0, 0);
+  }
+
+  function restart() {
+    idx = 0; score = 0; answers = [];
+    result.classList.add("hidden");
+    quiz.classList.remove("hidden");
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (quiz.classList.contains("hidden")) return;
+    var k = e.key.toLowerCase();
+    var n = "abcd".indexOf(k);
+    if (n < 0 && k >= "1" && k <= "4") n = Number(k) - 1;
+    if (n >= 0 && !answered && n < QUESTIONS[idx].o.length) { choose(n); return; }
+    if (e.key === "Enter" && answered) { e.preventDefault(); advance(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
